@@ -12,6 +12,12 @@
 .swiftpm/
 migrate_working_dir/
 
+# AI agents
+.claude/
+.codex/
+.github/
+.opencode/
+
 # IntelliJ related
 *.iml
 *.ipr

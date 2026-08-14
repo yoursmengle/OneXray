@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:onexray/core/tools/platform.dart';
 import 'package:onexray/pages/theme/color.dart';
 import 'package:onexray/pages/theme/font.dart';
 import 'package:onexray/pages/theme/theme.dart';
@@ -81,34 +82,39 @@ void main() {
     test('Material and Shad themes share the Geist typography system', () {
       final material = AppTheme.light;
       final shad = AppTheme.shad(Brightness.light);
+      final desktop = AppPlatform.isDesktop;
+      final mutedSize = desktop ? 12.0 : 14.0;
+      final mutedHeight = desktop ? 1.25 : 20 / 14;
+      final bodySize = desktop ? 13.0 : 16.0;
+      final bodyHeight = desktop ? 1.3 : 28 / 16;
 
       expect(material.textTheme.bodyMedium?.fontFamily, AppFontFamily.sans);
       expect(
         material.textTheme.bodyMedium?.fontFamilyFallback,
         AppFontFamily.sansFallback,
       );
-      expect(material.textTheme.bodyMedium?.fontSize, 14);
-      expect(material.textTheme.bodyMedium?.height, 20 / 14);
-      expect(material.textTheme.bodySmall?.fontSize, 14);
-      expect(material.textTheme.labelSmall?.fontSize, 14);
+      expect(material.textTheme.bodyMedium?.fontSize, mutedSize);
+      expect(material.textTheme.bodyMedium?.height, mutedHeight);
+      expect(material.textTheme.bodySmall?.fontSize, mutedSize);
+      expect(material.textTheme.labelSmall?.fontSize, mutedSize);
       expect(shad.textTheme.family, AppFontFamily.sans);
       expect(
         shad.textTheme.muted.fontFamilyFallback,
         AppFontFamily.sansFallback,
       );
-      expect(shad.textTheme.p.fontSize, 16);
-      expect(shad.textTheme.p.height, 28 / 16);
-      expect(shad.textTheme.small.fontSize, 14);
-      expect(shad.textTheme.muted.fontSize, 14);
-      expect(shad.textTheme.muted.height, 20 / 14);
+      expect(shad.textTheme.p.fontSize, bodySize);
+      expect(shad.textTheme.p.height, bodyHeight);
+      expect(shad.textTheme.small.fontSize, mutedSize);
+      expect(shad.textTheme.muted.fontSize, mutedSize);
+      expect(shad.textTheme.muted.height, mutedHeight);
       expect(shad.textTheme.h1.letterSpacing, 0);
       expect(shad.textTheme.h4.letterSpacing, 0);
-      expect(AppTypography.supporting.fontSize, 14);
-      expect(AppTypography.navigationLabel.fontSize, 14);
-      expect(AppTypography.badge.fontSize, 14);
+      expect(AppTypography.supporting.fontSize, mutedSize);
+      expect(AppTypography.navigationLabel.fontSize, mutedSize);
+      expect(AppTypography.badge.fontSize, mutedSize);
       expect(AppTypography.code.fontFamily, AppFontFamily.mono);
-      expect(AppTypography.code.fontSize, 14);
-      expect(AppTypography.code.height, 20 / 14);
+      expect(AppTypography.code.fontSize, mutedSize);
+      expect(AppTypography.code.height, mutedHeight);
       expect(AppFontFamily.windowsSansFallback, const <String>[
         "Microsoft YaHei UI",
         "Microsoft YaHei",

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:onexray/l10n/localizations/app_localizations.dart';
 import 'package:onexray/pages/main/url.dart';
+import 'package:onexray/pages/theme/font.dart';
 import 'package:onexray/pages/theme/theme.dart';
 import 'package:onexray/service/event_bus/service.dart';
 import 'package:onexray/service/event_bus/state.dart';
@@ -42,9 +43,12 @@ class GoRouteApp extends StatelessWidget {
           child: child ?? const SizedBox.shrink(),
         );
         final brightness = Theme.of(context).brightness;
-        return ShadTheme(
-          data: AppTheme.shad(brightness),
-          child: ShadToaster(child: routedChild),
+        return DesktopTextScale.wrap(
+          context,
+          ShadTheme(
+            data: AppTheme.shad(brightness),
+            child: ShadToaster(child: routedChild),
+          ),
         );
       },
     );

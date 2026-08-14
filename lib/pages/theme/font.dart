@@ -14,30 +14,94 @@ abstract final class AppFontFamily {
       AppPlatform.isWindows ? windowsSansFallback : null;
 }
 
+abstract final class DesktopTextScale {
+  static const min = 0.9;
+  static const max = 1.1;
+
+  static TextScaler clampScaler(TextScaler scaler) {
+    return scaler.clamp(minScaleFactor: min, maxScaleFactor: max);
+  }
+
+  static Widget wrap(BuildContext context, Widget child) {
+    if (!AppPlatform.isDesktop) {
+      return child;
+    }
+    return MediaQuery(
+      data: MediaQuery.of(
+        context,
+      ).copyWith(textScaler: clampScaler(MediaQuery.textScalerOf(context))),
+      child: child,
+    );
+  }
+}
+
 abstract final class AppTypography {
   static final _shadDefaults = ShadTextTheme(family: AppFontFamily.sans);
 
-  static TextStyle _normalize(TextStyle style) {
-    return style.copyWith(
+  static TextStyle _normalize(
+    TextStyle style, {
+    double? desktopFontSize,
+    double? desktopHeight,
+  }) {
+    var next = style.copyWith(
       letterSpacing: 0,
       fontFamilyFallback: AppFontFamily.sansFallback,
     );
+    if (AppPlatform.isDesktop) {
+      next = next.copyWith(
+        fontSize: desktopFontSize ?? next.fontSize,
+        height: desktopHeight ?? 1.25,
+      );
+    }
+    return next;
   }
 
   static final shad = ShadTextTheme.custom(
-    h1Large: _normalize(_shadDefaults.h1Large),
-    h1: _normalize(_shadDefaults.h1),
-    h2: _normalize(_shadDefaults.h2),
-    h3: _normalize(_shadDefaults.h3),
-    h4: _normalize(_shadDefaults.h4),
-    p: _normalize(_shadDefaults.p),
-    blockquote: _normalize(_shadDefaults.blockquote),
-    table: _normalize(_shadDefaults.table),
-    list: _normalize(_shadDefaults.list),
-    lead: _normalize(_shadDefaults.lead),
-    large: _normalize(_shadDefaults.large),
-    small: _normalize(_shadDefaults.small),
-    muted: _normalize(_shadDefaults.muted),
+    h1Large: _normalize(
+      _shadDefaults.h1Large,
+      desktopFontSize: 36,
+      desktopHeight: 1.15,
+    ),
+    h1: _normalize(_shadDefaults.h1, desktopFontSize: 28, desktopHeight: 1.2),
+    h2: _normalize(_shadDefaults.h2, desktopFontSize: 22, desktopHeight: 1.25),
+    h3: _normalize(_shadDefaults.h3, desktopFontSize: 18, desktopHeight: 1.25),
+    h4: _normalize(_shadDefaults.h4, desktopFontSize: 16, desktopHeight: 1.25),
+    p: _normalize(_shadDefaults.p, desktopFontSize: 13, desktopHeight: 1.3),
+    blockquote: _normalize(
+      _shadDefaults.blockquote,
+      desktopFontSize: 13,
+      desktopHeight: 1.3,
+    ),
+    table: _normalize(
+      _shadDefaults.table,
+      desktopFontSize: 13,
+      desktopHeight: 1.3,
+    ),
+    list: _normalize(
+      _shadDefaults.list,
+      desktopFontSize: 13,
+      desktopHeight: 1.3,
+    ),
+    lead: _normalize(
+      _shadDefaults.lead,
+      desktopFontSize: 15,
+      desktopHeight: 1.3,
+    ),
+    large: _normalize(
+      _shadDefaults.large,
+      desktopFontSize: 14,
+      desktopHeight: 1.25,
+    ),
+    small: _normalize(
+      _shadDefaults.small,
+      desktopFontSize: 12,
+      desktopHeight: 1.25,
+    ),
+    muted: _normalize(
+      _shadDefaults.muted,
+      desktopFontSize: 12,
+      desktopHeight: 1.25,
+    ),
     family: AppFontFamily.sans,
   );
 

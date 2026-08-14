@@ -11,8 +11,11 @@ import 'package:onexray/core/db/database/database.dart';
 import 'package:onexray/core/db/database/enum.dart';
 import 'package:onexray/core/tools/empty.dart';
 import 'package:onexray/service/localizations/service.dart';
+import 'package:onexray/core/tools/platform.dart';
 import 'package:onexray/service/ping/batch.dart';
 import 'package:onexray/service/ping/state.dart';
+import 'package:onexray/service/ping/tun_bypass.dart';
+import 'package:onexray/service/tun_settings/state.dart';
 import 'package:onexray/service/xray/full_config/state.dart';
 import 'package:onexray/service/xray/full_config/state_reader.dart';
 import 'package:onexray/service/xray/full_config/state_writer.dart';
@@ -147,12 +150,15 @@ class PingService {
   Future<void> _pingConfigs(AppDatabase db, List<CoreConfigData> rows) async {
     final pingState = PingState();
     await pingState.readFromPreferences();
+    final tunSettings = TunSettingsState();
+    await tunSettings.readFromPreferences();
+    final interfaceName = tunSettings.autoOutboundsInterface;
 
     for (final rowSlice in rows.slices(PingBatchRunner.maxBatchSize)) {
       final batchRows = <CoreConfigData>[];
       final sources = <PingBatchSource>[];
       for (final row in rowSlice) {
-        final source = _makePingSource(row);
+        final source = _makePingSource(row, interfaceName);
         if (source != null) {
           batchRows.add(row);
           sources.add(source);
@@ -171,36 +177,46 @@ class PingService {
     }
   }
 
-  PingBatchSource? _makePingSource(CoreConfigData row) {
+  PingBatchSource? _makePingSource(CoreConfigData row, String interfaceName) {
     if (!EmptyTool.checkString(row.data)) {
       return null;
     }
     try {
       final type = CoreConfigType.fromString(row.type);
-      switch (type) {
-        case CoreConfigType.outbound:
-          final outbound = OutboundState();
-          if (!outbound.readFromDbData(row)) {
-            return null;
-          }
-          final xrayJson = XrayJsonStandard.standard
-            ..outbounds = [outbound.xrayJson];
-          return PingBatchSource(JsonTool.encoder.convert(xrayJson.toJson()));
-        case CoreConfigType.raw:
-          final bytes = base64Decode(row.data!);
-          return PingBatchSource(utf8.decode(bytes));
-        case CoreConfigType.full:
-          final state = XrayFullConfigState()..readFromDbData(row);
-          return PingBatchSource(
-            JsonTool.encoder.convert(state.xrayJson.toJson()),
-          );
-        default:
-          return null;
+      final encoded = switch (type) {
+        CoreConfigType.outbound => _encodeOutbound(row),
+        CoreConfigType.raw => utf8.decode(base64Decode(row.data!)),
+        CoreConfigType.full => _encodeFullConfig(row),
+        _ => null,
+      };
+      if (encoded == null) {
+        return null;
       }
+      return PingBatchSource(
+        PingTunBypass.applyToXrayJsonText(
+          encoded,
+          apply: AppPlatform.isWindows || AppPlatform.isLinux,
+          interfaceName: interfaceName,
+        ),
+      );
     } catch (error, stackTrace) {
       ygLogger("Prepare ping source failed: ${row.id}, $error\n$stackTrace");
       return null;
     }
+  }
+
+  String? _encodeOutbound(CoreConfigData row) {
+    final outbound = OutboundState();
+    if (!outbound.readFromDbData(row)) {
+      return null;
+    }
+    final xrayJson = XrayJsonStandard.standard..outbounds = [outbound.xrayJson];
+    return JsonTool.encoder.convert(xrayJson.toJson());
+  }
+
+  String _encodeFullConfig(CoreConfigData row) {
+    final state = XrayFullConfigState()..readFromDbData(row);
+    return JsonTool.encoder.convert(state.xrayJson.toJson());
   }
 
   Future<void> _updateRow(AppDatabase db, CoreConfigData row, int delay) async {
